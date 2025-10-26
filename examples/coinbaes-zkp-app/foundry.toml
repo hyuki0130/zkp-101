@@ -1,0 +1,33 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["node_modules", "lib"]
+remappings = [
+    "@ethereum-attestation-service/=node_modules/@ethereum-attestation-service/",
+    "hardhat/=node_modules/hardhat/",
+]
+
+# Solidity 컴파일러 설정
+solc_version = "0.8.30"
+
+# 최대 최적화 (컨트랙트 크기 제한 해결)
+optimizer = true
+optimizer_runs = 1          # 배포 크기 최소화
+# via_ir = true             # Stack too deep 에러 발생으로 비활성화
+evm_version = "cancun"      # 최신 EVM 버전
+
+# 컨트랙트 크기 체크 (24KB 제한)
+bytecode_hash = "none"      # 메타데이터 해시 제거로 크기 감소
+
+# 추가 최적화 옵션
+[profile.default.optimizer_details]
+peephole = true
+inliner = true
+jumpdestRemover = true
+orderLiterals = true
+deduplicate = true
+cse = true
+constantOptimizer = true
+yul = true
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coinbase Attestor ZKP - Complete ECRecover</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Coinbase Attestor ZKP</h1>
+        <p class="subtitle">Complete ECRecover in Noir Circuit - Zero-Knowledge Proof</p>
+
+        <div class="info-box">
+            <p><strong>⚡ 완전한 ECRecover 구현</strong></p>
+            <p>✅ 회로 내에서 트랜잭션 서명으로부터 Signer 복구</p>
+            <p>✅ Pubkey를 외부 입력으로 받지 않음 (완전한 프라이버시)</p>
+            <p>✅ raw_transaction과 tx_signature만 입력으로 사용</p>
+            <p>🔒 모든 암호화 연산이 Zero-Knowledge Proof 내부에서 수행</p>
+        </div>
+
+        <!-- Step 1: Connect Wallet -->
+        <div class="wallet-section">
+            <button type="button" id="connectBtn" class="connect-btn">
+                🦊 MetaMask 연결
+            </button>
+            <div id="walletInfo" class="wallet-info" style="display: none;">
+                <p>✅ 연결된 지갑: <span id="connectedAddress"></span></p>
+            </div>
+        </div>
+
+        <!-- Step 2: Attestation Info -->
+        <div class="form-group">
+            <label>📡 Coinbase KYC Attestation (Base Mainnet)</label>
+            <div id="attestationInfo" style="padding: 10px; background: #f5f5f5; border-radius: 5px; margin-top: 5px;">
+                <p style="margin: 5px 0;">MetaMask를 먼저 연결해주세요...</p>
+            </div>
+        </div>
+
+        <!-- Step 3: Transaction Info -->
+        <div class="form-group">
+            <label>🔍 Transaction Details</label>
+            <div style="padding: 10px; background: #f5f5f5; border-radius: 5px; margin-top: 5px;">
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>TX Hash:</strong> <span id="txHash">-</span>
+                </p>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>TX Length:</strong> <span id="txLength">-</span>
+                </p>
+                <p style="margin: 5px 0; font-size: 12px; color: #666;">
+                    Raw Transaction과 Signature는 자동으로 추출되어 회로에 입력됩니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- Step 4: Circuit Inputs Info -->
+        <div class="info-box" style="background: #e7f3ff; border-left: 4px solid #667eea;">
+            <p><strong>📝 Circuit Inputs (main.nr)</strong></p>
+            <p style="font-size: 13px; margin-top: 5px;">
+                <strong>PUBLIC:</strong> user_address, tx_hash, tx_length<br>
+                <strong>PRIVATE:</strong> raw_transaction[300], tx_signature[65]
+            </p>
+            <p style="font-size: 12px; margin-top: 8px; color: #555;">
+                ⚠️ 이 회로는 calldata, user_signature, user_pubkey를 사용하지 않습니다!<br>
+                오직 raw_transaction과 tx_signature만 사용합니다.
+            </p>
+        </div>
+
+        <!-- Step 5: Actions -->
+        <div class="button-group">
+            <button type="button" id="generateBtn" class="action-btn primary" disabled>
+                🔨 Generate Proof
+            </button>
+            <button type="button" id="verifyBtn" class="action-btn secondary" disabled>
+                ✅ Verify Proof (Local)
+            </button>
+            <button type="button" id="verifyOnchainBtn" class="action-btn secondary" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                🌐 Verify Proof (On-Chain)
+            </button>
+        </div>
+
+        <!-- Verifier Contract Info -->
+        <div class="info-box" style="background: #e8f5e9; border-left: 4px solid #4caf50; margin-top: 15px;">
+            <p><strong>🌐 On-Chain Verifier</strong></p>
+            <p style="font-size: 13px; margin-top: 5px;">
+                <strong>Contract:</strong> 0x256C1679e1D90D069A32e5b200a0C8846821a77a<br>
+                <strong>Function:</strong> verify(bytes proof, bytes32[] publicInputs)<br>
+                <strong>Type:</strong> View (읽기 전용 - 가스비 없음)
+            </p>
+            <p style="font-size: 12px; margin-top: 8px; color: #555;">
+                ℹ️ 온체인 검증은 블록체인에서 직접 Proof를 검증합니다.<br>
+                MetaMask로 트랜잭션 없이 View 함수를 호출합니다.
+            </p>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;" id="loadingText">처리 중...</p>
+        </div>
+
+        <!-- Result -->
+        <div class="result" id="result"></div>
+
+        <!-- Circuit Info -->
+        <div class="info-box" style="margin-top: 30px; background: #f8f9fa;">
+            <p><strong>ℹ️ Circuit Information</strong></p>
+            <p style="font-size: 13px; margin-top: 5px;">
+                <strong>ACIR Opcodes:</strong> 6,326<br>
+                <strong>Brillig Opcodes:</strong> 133,596<br>
+                <strong>Expression Width:</strong> Bounded { width: 4 }<br>
+                <strong>Implementation:</strong> Complete ECRecover (no shortcuts!)
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+</body>
+</html>
