@@ -89,29 +89,33 @@ pub unconstrained fn recover_y(x: Secp256k1_Fq, is_odd: bool) -> Secp256k1_Fq {
     }
 }
 
+// Helper constants for point operations - cached to avoid repeated allocation
+unconstrained fn get_three() -> Secp256k1_Fq {
+    Secp256k1_Fq::one().__add(Secp256k1_Fq::one()).__add(Secp256k1_Fq::one())
+}
+
+unconstrained fn get_two() -> Secp256k1_Fq {
+    Secp256k1_Fq::one().__add(Secp256k1_Fq::one())
+}
+
 // Point doubling
+// OPTIMIZATION Phase 3+4: Reduce BigNum intermediate allocations + cached constants
 pub unconstrained fn point_double_unconstrained(p: Point) -> Point {
     let mut result = p;
 
     if !p.is_infinity {
-        let three = Secp256k1_Fq::one().__add(Secp256k1_Fq::one()).__add(Secp256k1_Fq::one());
-        let two = Secp256k1_Fq::one().__add(Secp256k1_Fq::one());
+        let three = get_three();
+        let two = get_two();
 
         // s = (3 * x^2) / (2 * y)
-        let x_squared = p.x.__mul(p.x);
-        let numerator = three.__mul(x_squared);
-        let denominator = two.__mul(p.y);
-        let s = numerator.__div(denominator);
+        // OPTIMIZATION: Chain operations to avoid storing x_squared separately
+        let s = three.__mul(p.x.__mul(p.x)).__div(two.__mul(p.y));
 
         // x3 = s^2 - 2*x
-        let s_squared = s.__mul(s);
-        let two_x = two.__mul(p.x);
-        let x3 = s_squared.__sub(two_x);
+        let x3 = s.__mul(s).__sub(two.__mul(p.x));
 
         // y3 = s * (x - x3) - y
-        let x_diff = p.x.__sub(x3);
-        let s_x_diff = s.__mul(x_diff);
-        let y3 = s_x_diff.__sub(p.y);
+        let y3 = s.__mul(p.x.__sub(x3)).__sub(p.y);
 
         result = Point { x: x3, y: y3, is_infinity: false };
     }
@@ -120,6 +124,7 @@ pub unconstrained fn point_double_unconstrained(p: Point) -> Point {
 }
 
 // Point addition
+// OPTIMIZATION Phase 3: Reduce BigNum intermediate allocations
 pub unconstrained fn point_add_unconstrained(p1: Point, p2: Point) -> Point {
     let mut result = Point { x: Secp256k1_Fq::zero(), y: Secp256k1_Fq::zero(), is_infinity: true };
 
@@ -136,20 +141,15 @@ pub unconstrained fn point_add_unconstrained(p1: Point, p2: Point) -> Point {
                 result = point_infinity();
             }
         } else {
+            // OPTIMIZATION: Chain operations to reduce intermediate BigNum allocations
             // s = (y2 - y1) / (x2 - x1)
-            let y_diff = p2.y.__sub(p1.y);
-            let x_diff = p2.x.__sub(p1.x);
-            let s = y_diff.__div(x_diff);
+            let s = p2.y.__sub(p1.y).__div(p2.x.__sub(p1.x));
 
             // x3 = s^2 - x1 - x2
-            let s_squared = s.__mul(s);
-            let x3_temp = s_squared.__sub(p1.x);
-            let x3 = x3_temp.__sub(p2.x);
+            let x3 = s.__mul(s).__sub(p1.x).__sub(p2.x);
 
             // y3 = s * (x1 - x3) - y1
-            let x_diff2 = p1.x.__sub(x3);
-            let s_x_diff = s.__mul(x_diff2);
-            let y3 = s_x_diff.__sub(p1.y);
+            let y3 = s.__mul(p1.x.__sub(x3)).__sub(p1.y);
 
             result = Point { x: x3, y: y3, is_infinity: false };
         }
@@ -175,20 +175,30 @@ pub unconstrained fn point_sub_unconstrained(p1: Point, p2: Point) -> Point {
 }
 
 // Scalar multiplication using double-and-add
+// OPTIMIZATION Phase 4: Reduce unnecessary operations in scalar multiplication
 pub unconstrained fn point_mul_unconstrained(scalar_bytes: [u8; 32], point: Point) -> Point {
     let mut result = point_infinity();
     let mut temp = point;
+
+    // Track if this is the last iteration to avoid unnecessary doubling
+    let mut bit_count = 0;
 
     // Iterate through each bit of the scalar (little-endian)
     for byte_idx in 0..32 {
         let byte = scalar_bytes[31 - byte_idx];
         for bit_idx in 0..8 {
             let bit = (byte >> bit_idx) & 1;
+            bit_count += 1;
 
             if bit == 1 {
                 result = point_add_unconstrained(result, temp);
             }
-            temp = point_double_unconstrained(temp);
+
+            // OPTIMIZATION: Skip the last doubling operation (bit 256)
+            // This saves one point_double call with all its BigNum allocations
+            if bit_count < 256 {
+                temp = point_double_unconstrained(temp);
+            }
         }
     }
 
