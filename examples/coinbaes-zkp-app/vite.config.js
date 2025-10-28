@@ -6,6 +6,12 @@ export default defineConfig({
     plugins: [
         nodePolyfills(),
     ],
+    resolve: {
+        alias: {
+            // Polyfill pino for browser compatibility
+            'pino': 'pino/browser.js',
+        },
+    },
     optimizeDeps: {
         esbuildOptions: {
             target: 'esnext',
