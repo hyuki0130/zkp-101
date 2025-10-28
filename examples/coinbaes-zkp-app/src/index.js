@@ -475,6 +475,49 @@ async function verifyProofOnchain() {
         const network = await provider.getNetwork();
         console.log('📡 Current network:', network.name, '(chainId:', network.chainId.toString(), ')');
 
+        // Check if on Base Sepolia (chainId: 84532)
+        const BASE_SEPOLIA_CHAIN_ID = 84532;
+        if (network.chainId !== BigInt(BASE_SEPOLIA_CHAIN_ID)) {
+            console.log('⚠️  Wrong network! Switching to Base Sepolia...');
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x14a34' }], // 84532 in hex
+                });
+                console.log('✅ Switched to Base Sepolia');
+                // Refresh provider and signer after network switch
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+            } catch (switchError) {
+                // Network not added, try to add it
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x14a34',
+                                chainName: 'Base Sepolia',
+                                nativeCurrency: {
+                                    name: 'Ethereum',
+                                    symbol: 'ETH',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://sepolia.base.org'],
+                                blockExplorerUrls: ['https://sepolia.basescan.org']
+                            }]
+                        });
+                        console.log('✅ Base Sepolia network added and switched');
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                        signer = await provider.getSigner();
+                    } catch (addError) {
+                        throw new Error('Failed to add Base Sepolia network');
+                    }
+                } else {
+                    throw switchError;
+                }
+            }
+        }
+
         // Create contract instance
         const verifierContract = new ethers.Contract(VERIFIER_CONTRACT, VERIFIER_ABI, signer);
 
