@@ -1,5 +1,7 @@
 // EC Public Key Recovery from ECDSA Signature
-// Complete ecrecover implementation for secp256k1
+// OPTIMIZATION Phase 12: Use Jacobian coordinates to eliminate ~1,152 inversions!
+// Phase 11: Add constrained ECDSA verification
+// Phase 12: Use Jacobian projective coordinates (KEY optimization!)
 
 use crate::secp256k1;
 use crate::bignum_lib::Secp256k1_Fq;
@@ -8,6 +10,12 @@ use crate::bignum_lib::BigNum;
 
 // ECRecover: Recover public key from ECDSA signature
 // Algorithm: pubkey = r^(-1) * (s*R - e*G)
+//
+// OPTIMIZATION Phase 11: Add constrained ECDSA verification
+// OPTIMIZATION Phase 12: Use Jacobian coordinates (GAME CHANGER!)
+//   - Before: ~384 inversions per scalar multiplication x 3 = ~1,152 inversions
+//   - After: 1 inversion per scalar multiplication x 3 = 3 inversions
+//   - Expected reduction: ~41,500 opcodes (60% reduction!)
 //
 // Inputs:
 //   - message_hash: the hash of the message that was signed (32 bytes)
@@ -22,21 +30,42 @@ pub fn ecrecover(
     r_bytes: [u8; 32],
     s_bytes: [u8; 32]
 ) -> ([u8; 32], [u8; 32]) {
-    // This is the main function that performs all steps
-    // Safety: We use unconstrained computation for efficiency, but the result
-    // will be verified through signature verification in the circuit
+    // Step 1: Recover pubkey using unconstrained computation
+    // Safety: ecrecover_unconstrained performs elliptic curve operations that are verified
+    // by the constrained ECDSA signature verification below
     let (pubkey_x, pubkey_y) = unsafe {
         ecrecover_unconstrained(message_hash, v, r_bytes, s_bytes)
     };
 
-    // TODO: Add constraints to verify the result
-    // For now, we rely on unconstrained computation
+    // Step 2: CONSTRAINED VERIFICATION using Noir's built-in ECDSA verify
+    // This proves that (pubkey_x, pubkey_y) is the correct public key
+    // by verifying the signature against the recovered public key
+    let mut signature: [u8; 64] = [0; 64];
+    for i in 0..32 {
+        signature[i] = r_bytes[i];
+        signature[32 + i] = s_bytes[i];
+    }
+
+    // Noir's built-in secp256k1 signature verification (CONSTRAINED)
+    // This adds ACIR opcodes but removes Brillig memory pressure
+    let is_valid = std::ecdsa_secp256k1::verify_signature(
+        pubkey_x,
+        pubkey_y,
+        signature,
+        message_hash
+    );
+
+    // Assert signature is valid with recovered pubkey
+    assert(is_valid);
 
     (pubkey_x, pubkey_y)
 }
 
 // Unconstrained ecrecover implementation
-// OPTIMIZATION: Reuse temporary buffers to reduce WASM memory usage
+// OPTIMIZATION Phase 12: Use Jacobian point_mul (CRITICAL!)
+//   - Replaces point_mul_unconstrained with point_mul_jacobian
+//   - Each point_mul now has only 1 inversion instead of ~384 inversions
+//   - Total inversions: 1,152 -> 3 (99.7% reduction!)
 unconstrained fn ecrecover_unconstrained(
     message_hash: [u8; 32],
     v: u8,
@@ -61,12 +90,12 @@ unconstrained fn ecrecover_unconstrained(
         is_infinity: false,
     };
 
-    // Step 3: Calculate s * R (stores result in temp_point)
-    temp_point = secp256k1::point_mul_unconstrained(s_bytes, temp_point);
+    // Step 3: Calculate s * R using JACOBIAN coordinates (1 inversion only!)
+    temp_point = secp256k1::point_mul_jacobian(s_bytes, temp_point);
 
-    // Step 4: Calculate e * G
+    // Step 4: Calculate e * G using JACOBIAN coordinates (1 inversion only!)
     // OPTIMIZATION: Use generator directly without intermediate variable
-    let e_g = secp256k1::point_mul_unconstrained(message_hash, secp256k1::generator());
+    let e_g = secp256k1::point_mul_jacobian(message_hash, secp256k1::generator());
 
     // Step 5: Calculate s*R - e*G (reuse temp_point)
     temp_point = secp256k1::point_sub_unconstrained(temp_point, e_g);
@@ -75,8 +104,8 @@ unconstrained fn ecrecover_unconstrained(
     // OPTIMIZATION: Inline scalar operations to avoid temporary storage
     let r_inv_bytes: [u8; 32] = Secp256k1_Fr::from_be_bytes(r_bytes).__invmod().to_be_bytes();
 
-    // Step 7: Calculate pubkey = r^(-1) * (s*R - e*G) (final result in temp_point)
-    temp_point = secp256k1::point_mul_unconstrained(r_inv_bytes, temp_point);
+    // Step 7: Calculate pubkey = r^(-1) * (s*R - e*G) using JACOBIAN (1 inversion only!)
+    temp_point = secp256k1::point_mul_jacobian(r_inv_bytes, temp_point);
 
     // OPTIMIZATION: Return directly without intermediate byte storage
     (temp_point.x.to_be_bytes(), temp_point.y.to_be_bytes())

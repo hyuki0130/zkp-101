@@ -322,29 +322,31 @@ pub(crate) unconstrained fn __helper_sub<let N: u32>(lhs: [u128; N], rhs: [u128;
     result
 }
 
+// OPTIMIZATION Phase 10: Fix type mismatches to reduce memory allocations
 pub(crate) unconstrained fn __shr<let N: u32>(input: [u128; N], shift: u32) -> [u128; N] {
     let mut result: [u128; N] = [0; N];
 
     let num_shifted_limbs = shift / 120;
-    let limb_shift = (shift % 120) as u128;
-    let remainder_shift = (120 - limb_shift);
-    let mask: u128 = (((1 as u128) << (limb_shift as u8)) - 1) << (remainder_shift as u8);
-    result[0] = (input[0 + num_shifted_limbs] >> (limb_shift as u8));
+    let limb_shift_u8 = (shift % 120) as u8;  // Store as u8 directly (0-119 fits in u8)
+    let remainder_shift_u8 = (120 - (shift % 120)) as u8;
+    let mask: u128 = (((1 as u128) << limb_shift_u8) - 1) << remainder_shift_u8;
+    result[0] = (input[0 + num_shifted_limbs] >> limb_shift_u8);
     for i in 1..(N - num_shifted_limbs) {
         let value = input[i + num_shifted_limbs];
-        result[i] = value >> (limb_shift as u8);
-        let remainder: u128 = (value << (remainder_shift as u8)) & mask;
+        result[i] = value >> limb_shift_u8;
+        let remainder: u128 = (value << remainder_shift_u8) & mask;
         result[i - 1] = result[i - 1] + remainder;
     }
     result
 }
 
+// OPTIMIZATION Phase 10: Fix type mismatches to reduce memory allocations
 pub(crate) unconstrained fn __shl<let N: u32>(input: [u128; N], shift: u32) -> [u128; N] {
     let mut result: [u128; N] = [0; N];
 
     let num_shifted_limbs = shift / 120;
-    let limb_shift = (shift % 120) as u128;
-    let remainder_shift = 120 - limb_shift;
+    let limb_shift_u8 = (shift % 120) as u8;  // Store as u8 directly (0-119 fits in u8)
+    let remainder_shift_u8 = (120 - (shift % 120)) as u8;
 
     // 83
     // limb shift = 1
@@ -354,15 +356,15 @@ pub(crate) unconstrained fn __shl<let N: u32>(input: [u128; N], shift: u32) -> [
     //   let mask: u64 = (((1 as u64) << limb_shift as u8) - 1) << remainder_shift as u8;
     let value = input[0];
 
-    let mut remainder = (value >> (remainder_shift as u8));
-    result[num_shifted_limbs] = (value << (limb_shift as u8)) & mask;
+    let mut remainder = (value >> remainder_shift_u8);
+    result[num_shifted_limbs] = (value << limb_shift_u8) & mask;
 
     // shift 84. num shifted = 1
     for i in 1..((N) - num_shifted_limbs) {
         let value = input[i];
-        let upshift = ((value << (limb_shift as u8)) + remainder) & mask;
+        let upshift = ((value << limb_shift_u8) + remainder) & mask;
         result[i + num_shifted_limbs] = upshift;
-        remainder = (value >> (remainder_shift as u8));
+        remainder = (value >> remainder_shift_u8);
     }
     result
 }
@@ -393,11 +395,12 @@ pub(crate) unconstrained fn __get_msb<let N: u32>(val: [u128; N]) -> u32 {
     count
 }
 
+// OPTIMIZATION Phase 10: Fix type mismatch (u128 >> u8)
 pub(crate) fn __get_bit<let N: u32>(input: [u128; N], bit: u32) -> bool {
     let segment_index: u32 = bit / 120;
-    let uint_index = (bit % 120) as u128;
+    let uint_index_u8 = (bit % 120) as u8;  // Store as u8 directly (0-119 fits in u8)
     let limb: u128 = input[segment_index];
-    let value = (limb >> (uint_index as u8)) & 1;
+    let value = (limb >> uint_index_u8) & 1;
     value == 1
 }
 

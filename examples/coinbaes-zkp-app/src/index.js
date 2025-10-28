@@ -327,15 +327,27 @@ async function generateProof() {
         console.log('📊 Circuit inputs:');
         console.log('  PUBLIC:');
         console.log('    - user_address:', userAddressLowercase, '→', userAddressBytes.length, 'bytes');
+        console.log('    - user_address LENGTH:', userAddressBytes.length);
         console.log('    - user_address bytes:', JSON.stringify(userAddressBytes));
         console.log('    - tx_hash:', '0x' + txHashData.map(b => b.toString(16).padStart(2, '0')).join(''));
+        console.log('    - tx_hash LENGTH:', txHashData.length);
         console.log('    - tx_hash bytes:', JSON.stringify(txHashData));
         console.log('    - tx_length:', txLengthData);
         console.log('  PRIVATE:');
+        console.log('    - raw_transaction LENGTH:', rawTransactionData.length, 'bytes');
         console.log('    - raw_transaction: [300 bytes]', 'first 10:', rawTransactionData.slice(0, 10));
         console.log('    - raw_transaction ALL bytes:', JSON.stringify(rawTransactionData));
+        console.log('    - tx_signature LENGTH:', txSignatureData.length, 'bytes');
         console.log('    - tx_signature: [65 bytes]', 'first 10:', txSignatureData.slice(0, 10));
         console.log('    - tx_signature ALL bytes:', JSON.stringify(txSignatureData));
+
+        console.log('\n=== 📏 INPUT DATA LENGTHS SUMMARY ===');
+        console.log('user_address:     ', userAddressBytes.length, 'bytes (expected: 20)');
+        console.log('tx_hash:          ', txHashData.length, 'bytes (expected: 32)');
+        console.log('raw_transaction:  ', rawTransactionData.length, 'bytes (expected: 300)');
+        console.log('tx_signature:     ', txSignatureData.length, 'bytes (expected: 65)');
+        console.log('tx_length:        ', txLengthData, '(actual transaction size)');
+        console.log('=====================================\n');
 
         console.log('\n=== COPY THIS FOR Prover.toml ===');
         console.log('user_address =', JSON.stringify(userAddressBytes));
