@@ -9,10 +9,16 @@ node_modules/
 dist/
 build/
 target/
+out/
 
 # Noir circuit outputs
 circuit/**/target/
 *.gz
+
+# Foundry/Forge outputs
+out/
+cache/
+broadcast/
 
 # OS files
 .DS_Store
