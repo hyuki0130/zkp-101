@@ -482,11 +482,12 @@ async function verifyProofOnchain() {
         const proofBytes = '0x' + Buffer.from(currentProof.proof).toString('hex');
         console.log('📦 Proof size:', proofBytes.length / 2, 'bytes');
 
-        // Prepare public inputs (52 field elements from user_address + tx_hash)
+        // Prepare public inputs (bytes32[] format)
         const publicInputs = currentProof.publicInputs.map(input => {
-            // Convert field element to bytes32
-            const hex = '0x' + input.toString(16).padStart(64, '0');
-            return hex;
+            // Convert field element to hex string (remove 0x prefix if exists, then add it once)
+            const inputStr = input.toString(16).padStart(64, '0');
+            const cleanHex = inputStr.startsWith('0x') ? inputStr.slice(2) : inputStr;
+            return '0x' + cleanHex;
         });
         console.log('📊 Public inputs count:', publicInputs.length);
         console.log('📊 Public inputs:', publicInputs);
