@@ -494,6 +494,7 @@ async function verifyProofOnchain() {
 
         loadingText.textContent = 'Calling verifier contract on-chain...';
         console.log('📞 Calling verify() on contract:', VERIFIER_CONTRACT);
+        console.log('⏱️  Starting on-chain verification timer...');
 
         const startTime = Date.now();
         const isValid = await verifierContract.verify(proofBytes, publicInputs);
@@ -501,7 +502,7 @@ async function verifyProofOnchain() {
         const duration = ((endTime - startTime) / 1000).toFixed(2);
 
         console.log('✅ On-chain verification complete:', isValid);
-        console.log('📊 Verification time:', duration, 'seconds');
+        console.log('⏱️  On-chain verification time:', duration, 'seconds');
 
         if (isValid) {
             showResult(
