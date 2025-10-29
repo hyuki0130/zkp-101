@@ -33,12 +33,23 @@ global COINBASE_ATTESTER: [u8; 20] = [
     0x33, 0x0D, 0xd7, 0xEE
 ];
 
-/// Coinbase authorized signer wallet address
-/// Address: 0x952f32128AF084422539C4Ff96df5C525322E564
-global COINBASE_SIGNER: [u8; 20] = [
-    0x95, 0x2f, 0x32, 0x12, 0x8A, 0xF0, 0x84, 0x42,
-    0x25, 0x39, 0xC4, 0xFF, 0x96, 0xdf, 0x5C, 0x52,
-    0x53, 0x22, 0xE5, 0x64
+/// Coinbase authorized signer wallet addresses
+/// Coinbase uses multiple signer wallets for load balancing and security
+/// Signer 1: 0x952f32128AF084422539C4Ff96df5C525322E564
+/// Signer 2: 0x8844591D47F17bcA6F5dF8f6B64F4a739F1C0080
+global COINBASE_SIGNERS: [[u8; 20]; 2] = [
+    // Signer 1: 0x952f32128AF084422539C4Ff96df5C525322E564
+    [
+        0x95, 0x2f, 0x32, 0x12, 0x8A, 0xF0, 0x84, 0x42,
+        0x25, 0x39, 0xC4, 0xFF, 0x96, 0xdf, 0x5C, 0x52,
+        0x53, 0x22, 0xE5, 0x64
+    ],
+    // Signer 2: 0x8844591D47F17bcA6F5dF8f6B64F4a739F1C0080
+    [
+        0x88, 0x44, 0x59, 0x1D, 0x47, 0xF1, 0x7b, 0xCA,
+        0x6F, 0x5d, 0xF8, 0xf6, 0xB6, 0x4F, 0x4a, 0x73,
+        0x9F, 0x1C, 0x00, 0x80
+    ]
 ];
 
 /// Verifies a Coinbase KYC attestation by proving the transaction was signed by Coinbase
@@ -106,6 +117,12 @@ fn main(
         recovered_pubkey_y
     );
 
-    // Verify signer is Coinbase's authorized wallet
-    assert(recovered_address == COINBASE_SIGNER);
+    // Verify signer is one of Coinbase's authorized wallets
+    let mut is_valid_signer = false;
+    for i in 0..COINBASE_SIGNERS.len() {
+        if recovered_address == COINBASE_SIGNERS[i] {
+            is_valid_signer = true;
+        }
+    }
+    assert(is_valid_signer);
 }

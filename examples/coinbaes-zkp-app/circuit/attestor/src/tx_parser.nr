@@ -57,18 +57,24 @@ pub fn create_unsigned_tx_hash(raw_tx: [u8; 300], tx_length: u32) -> [u8; 32] {
 /// # Returns
 /// The 20-byte Ethereum address the transaction was sent to
 ///
-/// # Transaction Structure
-/// - [0]: 0x02 (EIP-1559 type marker)
-/// - [1-2]: RLP length
-/// - [3-21]: Chain ID, nonce, fees, gas
-/// - [22]: 0x94 (RLP prefix for 20-byte address)
-/// - [23-42]: Destination address
+/// # Implementation
+/// Searches for the RLP address prefix (0x94) which indicates a 20-byte address follows.
+/// This is dynamic to handle different transaction sizes.
 pub fn extract_to_address(raw_tx: [u8; 300]) -> [u8; 20] {
     let mut to_address: [u8; 20] = [0; 20];
-    let to_offset = 23;
 
+    // Find 0x94 (RLP prefix for 20-byte address) in the transaction
+    // Start searching from index 3 (after type and RLP header)
+    let mut found_offset = 0;
+    for i in 3..50 {
+        if (raw_tx[i] == 0x94) & (found_offset == 0) {
+            found_offset = i + 1;  // Address starts after 0x94
+        }
+    }
+
+    // Extract 20-byte address
     for i in 0..20 {
-        to_address[i] = raw_tx[to_offset + i];
+        to_address[i] = raw_tx[found_offset + i];
     }
 
     to_address
@@ -86,9 +92,22 @@ pub fn extract_to_address(raw_tx: [u8; 300]) -> [u8; 20] {
 /// - [0-3]: Function selector (0x56feed5e for Coinbase attestation)
 /// - [4-15]: Zero padding (for uint256 alignment)
 /// - [16-35]: User address (20 bytes)
+///
+/// # Implementation
+/// Calldata comes after: to_address (20 bytes) + value (1 byte for 0x80) + data length prefix (1 byte for 0xa4)
 pub fn extract_calldata(raw_tx: [u8; 300]) -> [u8; 36] {
     let mut calldata: [u8; 36] = [0; 36];
-    let calldata_offset = 45;
+
+    // Find to_address first (find 0x94)
+    let mut to_address_offset = 0;
+    for i in 3..50 {
+        if (raw_tx[i] == 0x94) & (to_address_offset == 0) {
+            to_address_offset = i + 1;
+        }
+    }
+
+    // Calldata starts after: to_address (20 bytes) + value (1 byte) + data_length_prefix (1 byte)
+    let calldata_offset = to_address_offset + 20 + 1 + 1;
 
     for i in 0..36 {
         calldata[i] = raw_tx[calldata_offset + i];
