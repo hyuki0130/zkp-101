@@ -14,7 +14,7 @@ use dep::keccak256::keccak256;
 ///
 /// # Arguments
 /// * `raw_tx` - Full signed transaction bytes
-/// * `_tx_length` - Transaction length (unused in current implementation)
+/// * `tx_length` - Total transaction length (including signature)
 ///
 /// # Returns
 /// Keccak256 hash of the unsigned transaction
@@ -22,21 +22,29 @@ use dep::keccak256::keccak256;
 /// # Implementation Notes
 ///
 /// For Coinbase attestation transactions on Base Mainnet:
-/// - Total transaction length: 149 bytes
-/// - Unsigned portion: 82 bytes (indices 0-81)
-/// - Signature portion: 67 bytes (indices 82-148)
-/// - RLP length byte must be adjusted from 0x92 (signed) to 0x4f (unsigned)
-pub fn create_unsigned_tx_hash(raw_tx: [u8; 300], _tx_length: u32) -> [u8; 32] {
+/// - EIP-1559 signature is 67 bytes in RLP encoding: v (1-3 bytes) + r (33 bytes) + s (33 bytes)
+/// - Unsigned portion = tx_length - 67
+/// - RLP length byte at index 2 must be adjusted by subtracting 67
+pub fn create_unsigned_tx_hash(raw_tx: [u8; 300], tx_length: u32) -> [u8; 32] {
     let mut unsigned_tx: [u8; 300] = [0; 300];
-    let unsigned_length = 82;
+
+    // EIP-1559 signature is 67 bytes in RLP: v + r + s
+    let signature_rlp_length = 67;
+    let unsigned_length = tx_length - signature_rlp_length;
 
     // Copy unsigned transaction fields
-    for i in 0..82 {
-        unsigned_tx[i] = raw_tx[i];
+    for i in 0..300 {
+        if i < unsigned_length {
+            unsigned_tx[i] = raw_tx[i];
+        }
     }
 
-    // Fix RLP length encoding: signed (0x92) -> unsigned (0x4f)
-    unsigned_tx[2] = 0x4f;
+    // Fix RLP length encoding: subtract signature length from RLP length byte
+    // raw_tx[2] contains the RLP payload length (signed)
+    // We need to subtract 67 to get the unsigned RLP payload length
+    let signed_rlp_length = raw_tx[2];
+    let unsigned_rlp_length = signed_rlp_length - (signature_rlp_length as u8);
+    unsigned_tx[2] = unsigned_rlp_length;
 
     keccak256(unsigned_tx, unsigned_length)
 }
