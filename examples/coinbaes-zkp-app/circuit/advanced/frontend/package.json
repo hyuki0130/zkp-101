@@ -1,0 +1,21 @@
+{
+  "name": "advanced-circuit-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Browser-based frontend for Advanced Coinbase KYC Attestation Circuit",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aztec/bb.js": "^0.87.0",
+    "@noir-lang/noir_js": "1.0.0-beta.9",
+    "ethers": "^6.13.0",
+    "merkletreejs": "^0.4.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.10",
+    "vite-plugin-node-polyfills": "^0.24.0"
+  }
+}

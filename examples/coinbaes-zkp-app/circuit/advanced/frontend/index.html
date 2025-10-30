@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Coinbase KYC Attestation - Privacy Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 40px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        .info-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .info-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9rem;
+            color: #764ba2;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.active {
+            display: block;
+        }
+
+        .status.loading {
+            background: #fff9e6;
+            border-left: 4px solid #ffa500;
+            color: #8b6914;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+
+        .result-box {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .result-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+        }
+
+        .result-item label {
+            display: block;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .result-item .value {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            color: #333;
+        }
+
+        .privacy-indicators {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .privacy-indicator {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .privacy-indicator.private {
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .privacy-indicator.public {
+            border-color: #ff9800;
+            background: #fff8f1;
+        }
+
+        .privacy-indicator h4 {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .privacy-indicator .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .privacy-indicator.private .status-badge {
+            background: #4caf50;
+            color: white;
+        }
+
+        .privacy-indicator.public .status-badge {
+            background: #ff9800;
+            color: white;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .feature {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .feature p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Coinbase KYC Attestation</h1>
+            <p>Privacy-Enhanced Zero-Knowledge Proof with Anti-Replay Protection</p>
+            <span class="badge">Hybrid ECRecover Model</span>
+            <span class="badge">Merkle Tree Verification</span>
+        </header>
+
+        <div class="main-content">
+            <!-- Features Overview -->
+            <div class="features">
+                <div class="feature">
+                    <h3>Complete Privacy</h3>
+                    <p>User address and transaction details remain private</p>
+                </div>
+                <div class="feature">
+                    <h3>Anti-Replay Protection</h3>
+                    <p>Signal hash prevents proof reuse across dApps</p>
+                </div>
+                <div class="feature">
+                    <h3>Flexible Signers</h3>
+                    <p>Merkle tree supports unlimited Coinbase signers</p>
+                </div>
+                <div class="feature">
+                    <h3>Fast Performance</h3>
+                    <p>Hybrid model: JS ecrecover + circuit verification</p>
+                </div>
+            </div>
+
+            <!-- Step 1: Connect Wallet & Fetch Attestation -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>Connect Wallet & Fetch Attestation</h2>
+                </div>
+                <div class="info-box">
+                    <h3>Automatic Attestation Discovery</h3>
+                    <p>Connect your MetaMask wallet to automatically find your Coinbase KYC attestation.</p>
+                    <p>The system will query EAS (Ethereum Attestation Service) on Base Mainnet for your attestation.</p>
+                    <p>Your attestation proves you completed Coinbase KYC verification.</p>
+                </div>
+                <div class="button-group">
+                    <button id="connectWallet" class="btn-primary">Connect MetaMask</button>
+                </div>
+                <div id="walletStatus" class="status"></div>
+                <div id="walletResult" class="result-box">
+                    <h3>Wallet Connected</h3>
+                    <div class="result-item">
+                        <label>Connected Address:</label>
+                        <div class="value" id="connectedAddress"></div>
+                    </div>
+                </div>
+                <div id="txStatus" class="status"></div>
+                <div id="txResult" class="result-box">
+                    <h3>Attestation Found</h3>
+                    <div class="result-item">
+                        <label>From (Coinbase Signer):</label>
+                        <div class="value" id="txFrom"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>To (Attester Contract):</label>
+                        <div class="value" id="txTo"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Transaction Length:</label>
+                        <div class="value" id="txLength"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Attested Address:</label>
+                        <div class="value" id="attestedAddress"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Generate Proof Inputs -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>Generate Proof Inputs</h2>
+                </div>
+                <div class="info-box">
+                    <h3>Cryptographic Preprocessing</h3>
+                    <p>This step performs JavaScript preprocessing:</p>
+                    <p>1. Generate random <code>signal_hash</code> and get user signature</p>
+                    <p>2. Recover Coinbase signer's public key from transaction signature</p>
+                    <p>3. Build Merkle tree of authorized signers and generate proof</p>
+                </div>
+                <div class="button-group">
+                    <button id="generateInputs" class="btn-primary" disabled>Generate Inputs</button>
+                </div>
+                <div id="inputsStatus" class="status"></div>
+                <div id="inputsResult" class="result-box">
+                    <h3>Generated Inputs</h3>
+                    <div class="privacy-indicators">
+                        <div class="privacy-indicator public">
+                            <h4>Public Inputs</h4>
+                            <span class="status-badge">VISIBLE</span>
+                            <p style="margin-top: 10px; font-size: 0.85rem;">signal_hash, merkle_root</p>
+                        </div>
+                        <div class="privacy-indicator private">
+                            <h4>Private Inputs</h4>
+                            <span class="status-badge">HIDDEN</span>
+                            <p style="margin-top: 10px; font-size: 0.85rem;">user_address, signatures, pubkeys, tx_data</p>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <label>Signal Hash (Public):</label>
+                        <div class="value" id="signalHash"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Merkle Root (Public):</label>
+                        <div class="value" id="merkleRoot"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Coinbase Signer (Recovered):</label>
+                        <div class="value" id="recoveredSigner"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Signer in Authorized List:</label>
+                        <div class="value" id="signerInList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Generate ZK Proof -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>Generate Zero-Knowledge Proof</h2>
+                </div>
+                <div class="info-box">
+                    <h3>Circuit Execution</h3>
+                    <p>Generate a ZK proof that verifies:</p>
+                    <p>1. You own the address (via signature on signal_hash)</p>
+                    <p>2. Transaction was signed by authorized Coinbase signer (via Merkle proof)</p>
+                    <p>3. Transaction attests to your address</p>
+                    <p><strong>All without revealing your address or transaction details!</strong></p>
+                </div>
+                <div class="button-group">
+                    <button id="generateProof" class="btn-primary" disabled>Generate Proof</button>
+                </div>
+                <div id="proofStatus" class="status"></div>
+                <div id="proofResult" class="result-box">
+                    <h3>Proof Generated Successfully</h3>
+                    <div class="result-item">
+                        <label>Proof (hex):</label>
+                        <div class="value" id="proofHex" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Proof Size:</label>
+                        <div class="value" id="proofSize"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Generation Time:</label>
+                        <div class="value" id="proofTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Verify Proof (Local) -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-number">4</div>
+                    <h2>Verify Proof (Local)</h2>
+                </div>
+                <div class="info-box">
+                    <h3>Local Proof Verification</h3>
+                    <p>Verify the proof is valid without learning any private information.</p>
+                    <p>Verifier only sees: <code>signal_hash</code> and <code>merkle_root</code></p>
+                </div>
+                <div class="button-group">
+                    <button id="verifyProof" class="btn-primary" disabled>Verify Proof (Local)</button>
+                </div>
+                <div id="verifyStatus" class="status"></div>
+                <div id="verifyResult" class="result-box">
+                    <h3>Verification Result</h3>
+                    <div class="result-item">
+                        <label>Status:</label>
+                        <div class="value" id="verificationStatus"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Verification Time:</label>
+                        <div class="value" id="verifyTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Verify Proof (On-Chain) -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-number">5</div>
+                    <h2>Verify Proof (On-Chain)</h2>
+                </div>
+                <div class="info-box">
+                    <h3>On-Chain Proof Verification</h3>
+                    <p>Submit the proof to the deployed verifier contract on Base network.</p>
+                    <p>Contract Address: <code>0x4b0C010346093fd09e1cBbeA6D7Af1888eDF55C8</code></p>
+                    <p><strong>This provides trustless, immutable verification on the blockchain!</strong></p>
+                </div>
+                <div class="button-group">
+                    <button id="verifyOnChain" class="btn-primary" disabled>Verify On-Chain</button>
+                </div>
+                <div id="onChainStatus" class="status"></div>
+                <div id="onChainResult" class="result-box">
+                    <h3>On-Chain Verification Result</h3>
+                    <div class="result-item">
+                        <label>Status:</label>
+                        <div class="value" id="onChainVerificationStatus"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Transaction Hash:</label>
+                        <div class="value" id="onChainTxHash"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Gas Used:</label>
+                        <div class="value" id="onChainGasUsed"></div>
+                    </div>
+                    <div class="result-item">
+                        <label>Verification Time:</label>
+                        <div class="value" id="onChainVerifyTime"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
