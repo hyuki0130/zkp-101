@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
-package-lock.json
+# package-lock.json should be committed for reproducible builds
+# Only ignore package-lock.json in root/examples directories
+/package-lock.json
+examples/*/package-lock.json
 
 # Build outputs
 dist/
