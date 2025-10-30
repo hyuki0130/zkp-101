@@ -1,0 +1,20 @@
+services:
+  advanced-zkp-frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    container_name: coinbase-zkp-advanced-frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    labels:
+      - "com.example.description=Coinbase Attestor Advanced ZKP Frontend"
+      - "com.example.version=1.0.0"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

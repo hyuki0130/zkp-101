@@ -27,7 +27,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '../target/advanced.json': resolve(__dirname, '../target/advanced.json'),
+      '../target/advanced.json': resolve(__dirname, 'target/advanced.json'),
       'pino': 'pino/browser.js'
     }
   },
