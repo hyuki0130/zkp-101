@@ -7,6 +7,10 @@ dist/
 build/
 target/
 
+# Exception: Keep compiled circuit artifacts needed for deployment
+!examples/coinbaes-zkp-app/circuit/advanced/target/
+!examples/coinbaes-zkp-app/circuit/advanced/target/advanced.json
+
 # Noir
 *.gz
 proof
