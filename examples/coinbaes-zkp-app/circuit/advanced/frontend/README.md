@@ -24,21 +24,36 @@ Access at: http://localhost:5174
 
 ### Docker Deployment (Recommended for Demo)
 
-**Super Simple - Just run:**
+**Option 1: HTTP (Development)**
 
 ```bash
 ./docker-up.sh
 ```
 
+This will serve on http://localhost:8080
+
+**Option 2: HTTPS (Production - Faster ZKP)**
+
+```bash
+./docker-up-https.sh
+```
+
 This will:
-1. Build the Docker image
-2. Start the container in background
-3. Serve on http://localhost:8080
+1. Generate self-signed SSL certificate (if not exists)
+2. Build the Docker image with HTTPS support
+3. Serve on https://localhost
+
+**Why HTTPS?**
+- Enables `SharedArrayBuffer` for multithreading
+- **2x faster proof generation** (17s vs 36s)
+- Required for production deployments
 
 **To stop:**
 
 ```bash
-./docker-down.sh
+./docker-down.sh  # For HTTP
+# or
+docker-compose -f docker-compose-https.yml down  # For HTTPS
 ```
 
 ### Alternative Scripts

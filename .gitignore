@@ -37,3 +37,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# SSL certificates (generated locally, not committed)
+examples/coinbaes-zkp-app/circuit/advanced/frontend/certs/

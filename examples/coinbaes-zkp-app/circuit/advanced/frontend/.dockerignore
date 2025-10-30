@@ -11,3 +11,7 @@ yarn-error.log*
 .env.local
 .env.*.local
 README.md
+certs
+*.key
+*.crt
+*.pem
