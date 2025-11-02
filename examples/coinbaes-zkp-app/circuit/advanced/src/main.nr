@@ -15,7 +15,8 @@
 use dep::std;
 use dep::keccak256::keccak256;
 
-mod tx_parser;
+mod rlp;  // RLP library ported to Noir 1.0
+mod eip1559_tx_parser;  // EIP-1559 transaction parser (Type 0x02 only)
 mod merkle;
 
 // Global Constants
@@ -146,13 +147,13 @@ fn main(
     // ===================================================================
 
     // 3. Securely decode the RLP transaction
-    //    Note: We reuse the tx_parser from attestor circuit
-    let unsigned_tx_hash = tx_parser::create_unsigned_tx_hash(raw_transaction, tx_length);
+    //    Note: EIP-1559 only - Coinbase attestations use Type 0x02 transactions
+    let unsigned_tx_hash = eip1559_tx_parser::create_unsigned_tx_hash(raw_transaction, tx_length);
 
     // 4. (CRITICAL) Verify the signature *before* trusting the pubkey
     //    This checks: "Does the provided pubkey match the signature on this TX?"
-    //    Note: The signature is embedded in raw_transaction, we extract it
-    let tx_signature = tx_parser::extract_signature_from_tx(raw_transaction, tx_length);
+    //    Note: The signature is embedded in raw_transaction, we extract it using RLP
+    let tx_signature = eip1559_tx_parser::extract_signature_from_tx(raw_transaction);
 
     // Extract r, s from signature (v is at the end)
     let mut signature_r: [u8; 32] = [0; 32];
@@ -205,11 +206,11 @@ fn main(
     // ===================================================================
 
     // 6. Verify the transaction's contents (destination and data)
-    let to_address = tx_parser::extract_to_address(raw_transaction);
+    let to_address = eip1559_tx_parser::extract_to_address(raw_transaction);
     assert(to_address == COINBASE_ATTESTER_CONTRACT, "TX sent to wrong contract");
 
     // 7. Verify calldata format
-    let calldata = tx_parser::extract_calldata(raw_transaction);
+    let calldata = eip1559_tx_parser::extract_calldata(raw_transaction);
 
     // Check function selector
     let mut selector: [u8; 4] = [0; 4];
@@ -219,7 +220,7 @@ fn main(
     assert(selector == ATTEST_ACCOUNT_SELECTOR, "Invalid function selector");
 
     // 8. (FINAL LINK) Verify the address in the calldata matches the user's address
-    let calldata_address = tx_parser::extract_address_from_calldata(calldata);
+    let calldata_address = eip1559_tx_parser::extract_address_from_calldata(calldata);
 
     assert(calldata_address == user_address, "Calldata address does not match user_address");
 
